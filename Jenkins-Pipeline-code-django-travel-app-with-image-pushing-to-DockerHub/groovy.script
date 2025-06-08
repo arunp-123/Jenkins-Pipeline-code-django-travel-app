@@ -1,0 +1,32 @@
+pipeline {
+    agent { label "mynode" }
+
+    stages {
+        stage('code clone') {
+            steps {
+                git url: "https://github.com/BashOps/django-travel-app.git", branch: "master"
+            }
+        }
+            stage('Build Stage') {
+            steps {
+                sh "docker build -t arun1278/django-application:v1 ."
+            }
+        }
+            stage('Push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'DockerCred', usernameVariable: 'dockerUser', passwordVariable: 'dockerPass')]) {
+                  sh "docker login -u ${dockerUser} -p ${dockerPass}"
+                  sh "docker image tag arun1278/django-application:v1 arun1278/django-application:latest"
+                  sh "docker push arun1278/django-application:latest"
+
+                }
+            }
+        }
+                stage('Deploy') {
+                steps {
+                sh "docker run --name django-travel-app5 -d -p 8005:8000 arun1278/django-application:latest"
+            }
+        }
+    }
+}
+
